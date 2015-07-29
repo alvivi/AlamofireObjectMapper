@@ -46,17 +46,16 @@ extension Request {
 	*/
 	public func responseObject<T: Mappable>(queue: dispatch_queue_t?, completionHandler: (NSURLRequest, NSHTTPURLResponse?, T?, AnyObject?, NSError?) -> Void) -> Self {
 		
-		return response(queue: queue, responseSerializer: Request.JSONResponseSerializer(options: NSJSONReadingOptions.AllowFragments)) { (request, response, data, error) -> Void in
-			
-			dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-
+        return response(queue, responseSerializer: Request.JSONResponseSerializer(options: NSJSONReadingOptions.AllowFragments), completionHandler: { (request, response, data, error) -> Void in
+            
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) { () -> Void in
 				let parsedObject = Mapper<T>().map(data)
 				
 				dispatch_async(queue ?? dispatch_get_main_queue()) {
-					completionHandler(self.request, self.response, parsedObject, data, error)
+					completionHandler(self.request!, self.response, parsedObject, data, error)
 				}
-			}
-		}
+            }
+        })
 	}
 	
 	// MARK: Array responses
@@ -95,16 +94,13 @@ extension Request {
 	*/
 	public func responseArray<T: Mappable>(queue: dispatch_queue_t?, completionHandler: (NSURLRequest, NSHTTPURLResponse?, [T]?, AnyObject?, NSError?) -> Void) -> Self {
 		
-		return response(queue: queue, responseSerializer: Request.JSONResponseSerializer(options: NSJSONReadingOptions.AllowFragments)) { (request, response, data, error) -> Void in
-			
-			dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        return response(queue, responseSerializer: Request.JSONResponseSerializer(options: NSJSONReadingOptions.AllowFragments), completionHandler: { (request, response, data, error) -> Void in
 				
 				let parsedObject = Mapper<T>().mapArray(data)
 				
 				dispatch_async(queue ?? dispatch_get_main_queue()) {
-					completionHandler(self.request, self.response, parsedObject, data, error)
+					completionHandler(self.request!, self.response, parsedObject, data, error)
 				}
-			}
-		}
+        })
 	}
 }
